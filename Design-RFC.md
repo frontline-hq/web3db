@@ -22,6 +22,8 @@ The counter measures:
     -   Every change has to include a proof of work (or proof of stake)
     -   Register a timestamp and personal signature at a central authority which returns a proof of time
 
+    Also have a look at https://rfc.vac.dev/spec/17/
+
 2.  **Content verification peer**
     There can be a central authority / certain peers that can be asked to verify the contents upon syncronization (if the receiving peer or sending peer is connected to the verifying party). Content verification can be setup up to be mandatory.
 

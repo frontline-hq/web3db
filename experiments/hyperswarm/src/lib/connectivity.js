@@ -3,6 +3,7 @@ import Stream from '@hyperswarm/dht-relay/ws';
 import Hyperswarm from 'hyperswarm';
 import { Buffer } from 'buffer';
 import { writable } from 'svelte/store';
+import b4a from 'b4a';
 
 export const logs = writable([]);
 
@@ -23,8 +24,8 @@ export async function joinAsClient(topic) {
 		addToLogs({ type: 'Client progress report', message: 'Client established connection.' });
 		console.log(info);
 		conn.on('data', (data) => {
-			console.log(data);
-			addToLogs({ type: 'Client received data', message: data });
+			console.log(b4a.toString(data));
+			addToLogs({ type: 'Client received data', message: b4a.toString(data) });
 		});
 	});
 	const topicBuffer = Buffer.alloc(32).fill(topic);

@@ -24,6 +24,7 @@
 	"type": "module",
 	"dependencies": {
 		"@hyperswarm/dht-relay": "^0.4.1",
+		"b4a": "^1.6.4",
 		"buffer": "^6.0.3",
 		"hyperswarm": "^4.5.1"
 	},

@@ -2,6 +2,13 @@ import DHT from '@hyperswarm/dht-relay';
 import Stream from '@hyperswarm/dht-relay/ws';
 import Hyperswarm from 'hyperswarm';
 import { Buffer } from 'buffer';
+import { writable } from 'svelte/store';
+
+export const logs = writable([]);
+
+const addToLogs = (entry) => {
+	logs.update(($oldLogs) => [...$oldLogs, entry]);
+};
 
 function createSwarm() {
 	const ws = new WebSocket('wss://dht1-relay.leet.ar:49443');
@@ -10,34 +17,36 @@ function createSwarm() {
 	return swarm;
 }
 
-export async function joinAsClient(topic, dataArray) {
+export async function joinAsClient(topic) {
 	const swarm = createSwarm();
 	swarm.on('connection', (conn, info) => {
+		addToLogs({ type: 'Client progress report', message: 'Client established connection.' });
 		console.log(info);
 		conn.on('data', (data) => {
 			console.log(data);
-			dataArray.push(data);
+			addToLogs({ type: 'Client received data', message: data });
 		});
 	});
 	const topicBuffer = Buffer.alloc(32).fill(topic);
-	console.log('Joining topic...');
+	addToLogs({ type: 'Client progress report', message: `Joining topic "${topic}"...` });
 	swarm.join(topicBuffer, { server: false, client: true });
 	await swarm.flush();
-	console.log('flush finished');
+	addToLogs({ type: 'Client progress report', message: `Flushed.` });
 }
 
-export async function joinAsServer(topic, message, dataArray) {
+export async function joinAsServer(topic, message) {
 	const swarm = createSwarm();
 	swarm.on('connection', (conn, info) => {
 		console.log(`message "${message}" written.`);
 		console.log(info);
-		dataArray.push(message);
+		addToLogs({ type: 'Server progress report', message: 'Server established connection.' });
+		addToLogs({ type: 'Server emitted message', message });
 		conn.write(message);
 		conn.end();
 	});
 	const topicBuffer = Buffer.alloc(32).fill(topic);
-	console.log('Joining topic...');
+	addToLogs({ type: 'Server progress report', message: `Joining topic "${topic}"...` });
 	const discovery = swarm.join(topicBuffer, { server: true, client: false });
 	await discovery.flushed();
-	console.log('flush finished');
+	addToLogs({ type: 'Server progress report', message: `Flushed.` });
 }

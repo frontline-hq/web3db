@@ -1,5 +1,5 @@
 <script>
-	import { joinAsClient, joinAsServer } from '../lib/connectivity';
+	import { joinAsClient, joinAsServer, logs } from '../lib/connectivity';
 	import {
 		Form,
 		FormGroup,
@@ -13,26 +13,26 @@
 		StructuredListCell,
 		StructuredListBody
 	} from 'carbon-components-svelte';
-	const dataArray = [];
 	let mode = 'client';
+	let topic = '';
+	let dhtMessage = '';
 </script>
 
 <div style="display: flex; padding: 40px;">
 	<Form
 		on:submit={(event) => {
 			event.preventDefault();
-			const formData = new FormData(event.target);
-			if (formData.mode === 'client') {
-				joinAsClient(formData.topic, dataArray);
+			if (mode === 'client') {
+				joinAsClient(topic);
 			} else {
-				joinAsServer(formData.topic, formData.message, dataArray);
+				joinAsServer(topic, dhtMessage);
 			}
 		}}
 		method="post"
 		style="width:50%; margin-right:40px;"
 	>
 		<FormGroup legendText="Swarm topic">
-			<TextInput required name="topic" placeholder="Enter topic to swarm for" />
+			<TextInput required name="topic" placeholder="Enter topic to swarm for" bind:value={topic} />
 		</FormGroup>
 		<FormGroup legendText="Join swarm as ...">
 			<RadioButtonGroup bind:selected={mode}>
@@ -45,6 +45,7 @@
 				required={mode === 'server'}
 				disabled={mode === 'client'}
 				name="message"
+				bind:value={dhtMessage}
 				placeholder="Enter a message to send in the DHT"
 			/>
 		</FormGroup>
@@ -53,39 +54,17 @@
 	<StructuredList>
 		<StructuredListHead>
 			<StructuredListRow head>
-				<StructuredListCell head>Column A</StructuredListCell>
-				<StructuredListCell head>Column B</StructuredListCell>
-				<StructuredListCell head>Column C</StructuredListCell>
+				<StructuredListCell head>Type</StructuredListCell>
+				<StructuredListCell head>Log</StructuredListCell>
 			</StructuredListRow>
 		</StructuredListHead>
-		<StructuredListBody>
-			<StructuredListRow>
-				<StructuredListCell noWrap>Row 1</StructuredListCell>
-				<StructuredListCell>Row 1</StructuredListCell>
-				<StructuredListCell>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc dui magna, finibus id tortor
-					sed, aliquet bibendum augue. Aenean posuere sem vel euismod dignissim. Nulla ut cursus
-					dolor. Pellentesque vulputate nisl a porttitor interdum.
-				</StructuredListCell>
-			</StructuredListRow>
-			<StructuredListRow>
-				<StructuredListCell noWrap>Row 2</StructuredListCell>
-				<StructuredListCell>Row 2</StructuredListCell>
-				<StructuredListCell>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc dui magna, finibus id tortor
-					sed, aliquet bibendum augue. Aenean posuere sem vel euismod dignissim. Nulla ut cursus
-					dolor. Pellentesque vulputate nisl a porttitor interdum.
-				</StructuredListCell>
-			</StructuredListRow>
-			<StructuredListRow>
-				<StructuredListCell noWrap>Row 3</StructuredListCell>
-				<StructuredListCell>Row 3</StructuredListCell>
-				<StructuredListCell>
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc dui magna, finibus id tortor
-					sed, aliquet bibendum augue. Aenean posuere sem vel euismod dignissim. Nulla ut cursus
-					dolor. Pellentesque vulputate nisl a porttitor interdum.
-				</StructuredListCell>
-			</StructuredListRow>
-		</StructuredListBody>
+		{#each $logs as { type, message }}
+			<StructuredListBody>
+				<StructuredListRow>
+					<StructuredListCell>{type}</StructuredListCell>
+					<StructuredListCell>{message}</StructuredListCell>
+				</StructuredListRow>
+			</StructuredListBody>
+		{/each}
 	</StructuredList>
 </div>

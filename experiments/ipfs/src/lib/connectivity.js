@@ -3,7 +3,11 @@ import { mplex } from '@libp2p/mplex';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { bootstrap } from '@libp2p/bootstrap';
 //import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
-import { tcp } from '@libp2p/tcp';
+//import { tcp } from '@libp2p/tcp';
+import { webSockets } from '@libp2p/websockets';
+import * as filters from '@libp2p/websockets/filters';
+import { webRTC, webRTCDirect } from '@libp2p/webrtc';
+import { circuitRelayTransport } from 'libp2p/circuit-relay';
 import { MemoryBlockstore } from 'blockstore-core';
 import { MemoryDatastore } from 'datastore-core';
 import { createHelia } from 'helia';
@@ -29,12 +33,28 @@ export async function createNode() {
 	const libp2p = await createLibp2p({
 		datastore,
 		addresses: {
-			listen: ['/ip4/127.0.0.1/tcp/0']
+			listen: ['/webrtc']
 		},
-		transports: [tcp()],
+		transports: [
+			webSockets({
+				filter: filters.all
+			}),
+			webRTC({
+				rtcConfiguration: {
+					iceServers: [
+						{
+							urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478']
+						}
+					]
+				}
+			}),
+			webRTCDirect(),
+			circuitRelayTransport({
+				discoverRelays: 1
+			})
+		],
 		connectionEncryption: [noise()],
 		streamMuxers: [yamux(), mplex()],
-		pubsub: gossipsub({ allowPublishToZeroPeers: true }),
 		peerDiscovery: [
 			bootstrap({
 				list: [
@@ -49,7 +69,8 @@ export async function createNode() {
 			}) */
 		],
 		services: {
-			identify: identifyService()
+			identify: identifyService(),
+			pubsub: gossipsub({ allowPublishToZeroPeers: true })
 		}
 	});
 
@@ -62,6 +83,7 @@ export async function createNode() {
 
 export async function joinAsClient(topic) {
 	const node = await createNode();
+	node.libp2p.services.pubsub.subscribe(topic);
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
 		addToLogs({
 			type: 'Client received data',
@@ -69,11 +91,17 @@ export async function joinAsClient(topic) {
 		});
 		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
 	});
-	node.libp2p.services.pubsub.subscribe(topic);
+	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
+		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
+
+		console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`);
+	});
 }
 
 export async function joinAsServer(topic, message) {
 	const node = await createNode();
+	node.libp2p.services.pubsub.subscribe(topic);
+	node.libp2p.services.pubsub.publish(topic, new TextEncoder().encode(message));
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
 		addToLogs({
 			type: 'Server emitted message',
@@ -81,5 +109,9 @@ export async function joinAsServer(topic, message) {
 		});
 		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
 	});
-	node.libp2p.services.pubsub.publish(topic, new TextEncoder().encode(message));
+	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
+		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
+
+		console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`);
+	});
 }

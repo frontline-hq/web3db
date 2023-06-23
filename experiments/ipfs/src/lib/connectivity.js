@@ -83,32 +83,25 @@ export async function createNode() {
 
 export async function joinAsClient(topic) {
 	const node = await createNode();
-	node.libp2p.services.pubsub.subscribe(topic);
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
-		addToLogs({
-			type: 'Client received data',
-			message: new TextDecoder().decode(message.detail.data)
-		});
 		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
 	});
+	node.libp2p.services.pubsub.subscribe(topic);
 	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
 		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
-
 		console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`);
 	});
 }
 
 export async function joinAsServer(topic, message) {
 	const node = await createNode();
-	node.libp2p.services.pubsub.subscribe(topic);
-	node.libp2p.services.pubsub.publish(topic, new TextEncoder().encode(message));
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
-		addToLogs({
-			type: 'Server emitted message',
-			message: new TextDecoder().decode(message.detail.data)
-		});
 		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
 	});
+	node.libp2p.services.pubsub.subscribe(topic);
+	console.log('subscribed to topic');
+	await node.libp2p.services.pubsub.publish(topic, new TextEncoder().encode(message));
+	console.log('published message in topic');
 	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
 		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
 

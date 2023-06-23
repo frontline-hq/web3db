@@ -15,12 +15,22 @@ import { createLibp2p } from 'libp2p';
 import { identifyService } from 'libp2p/identify';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { writable } from 'svelte/store';
+import { kadDHT } from '@libp2p/kad-dht';
 
 export const logs = writable([]);
+export const connectedPeers = writable([]);
+export const ownPeerId = writable('unknown');
 
 const addToLogs = (entry) => {
 	logs.update(($oldLogs) => [...$oldLogs, entry]);
 };
+
+const bootstraps = [
+	'/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+	'/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+	'/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+	'/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+];
 
 export async function createNode() {
 	// the blockstore is where we store the blocks that make up files
@@ -57,12 +67,8 @@ export async function createNode() {
 		streamMuxers: [yamux(), mplex()],
 		peerDiscovery: [
 			bootstrap({
-				list: [
-					'/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-					'/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-					'/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-					'/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
-				]
+				interval: 100,
+				list: bootstraps
 			})
 			/* pubsubPeerDiscovery({
 				interval: 1000
@@ -70,7 +76,8 @@ export async function createNode() {
 		],
 		services: {
 			identify: identifyService(),
-			pubsub: gossipsub({ allowPublishToZeroPeers: true })
+			pubsub: gossipsub({ allowPublishToZeroPeers: true, emitSelf: true }),
+			dht: kadDHT()
 		}
 	});
 
@@ -83,28 +90,37 @@ export async function createNode() {
 
 export async function joinAsClient(topic) {
 	const node = await createNode();
+	ownPeerId.set(node.libp2p.peerId.toString());
+	node.libp2p.addEventListener('peer:connect', () => {
+		connectedPeers.set(node.libp2p.getPeers().map((peerId) => peerId.toString()));
+	});
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
-		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
+		addToLogs({
+			type: 'Client progress report',
+			message: `${message.detail.topic}: ${new TextDecoder().decode(message.detail.data)}`
+		});
 	});
 	node.libp2p.services.pubsub.subscribe(topic);
-	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
-		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
-		console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`);
-	});
+	addToLogs({ type: 'Client progress report', message: `subscribed to topic "${topic}"` });
 }
 
 export async function joinAsServer(topic, message) {
 	const node = await createNode();
+	ownPeerId.set(node.libp2p.peerId.toString());
+	node.libp2p.addEventListener('peer:connect', () => {
+		connectedPeers.set(node.libp2p.getPeers().map((peerId) => peerId.toString()));
+	});
 	node.libp2p.services.pubsub.addEventListener('message', (message) => {
-		console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data));
+		addToLogs({
+			type: 'Server progress report',
+			message: `${message.detail.topic}: ${new TextDecoder().decode(message.detail.data)}`
+		});
 	});
 	node.libp2p.services.pubsub.subscribe(topic);
-	console.log('subscribed to topic');
+	addToLogs({ type: 'Server progress report', message: `subscribed to topic "${topic}"` });
 	await node.libp2p.services.pubsub.publish(topic, new TextEncoder().encode(message));
-	console.log('published message in topic');
-	node.libp2p.addEventListener('self:peer:update', ({ detail: { peer } }) => {
-		const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr);
-
-		console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`);
+	addToLogs({
+		type: 'Server progress report',
+		message: `published message "${message}" in topic "${topic}"`
 	});
 }

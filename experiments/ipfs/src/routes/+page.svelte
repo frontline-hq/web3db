@@ -1,5 +1,5 @@
 <script>
-	import { joinAsClient, joinAsServer, logs } from '../lib/connectivity';
+	import { joinAsClient, joinAsServer, logs, connectedPeers, ownPeerId } from '../lib/connectivity';
 	import {
 		Form,
 		FormGroup,
@@ -11,7 +11,8 @@
 		StructuredListHead,
 		StructuredListRow,
 		StructuredListCell,
-		StructuredListBody
+		StructuredListBody,
+		Tag
 	} from 'carbon-components-svelte';
 	let mode = 'client';
 	let topic = '';
@@ -19,38 +20,54 @@
 </script>
 
 <div style="display: flex; padding: 40px;">
-	<Form
-		on:submit={(event) => {
-			event.preventDefault();
-			if (mode === 'client') {
-				joinAsClient(topic);
-			} else {
-				joinAsServer(topic, dhtMessage);
-			}
-		}}
-		method="post"
-		style="width:50%; margin-right:40px;"
-	>
-		<FormGroup legendText="Swarm topic">
-			<TextInput required name="topic" placeholder="Enter topic to swarm for" bind:value={topic} />
-		</FormGroup>
-		<FormGroup legendText="Join swarm as ...">
-			<RadioButtonGroup bind:selected={mode}>
-				<RadioButton name="mode" labelText="Client" value="client" />
-				<RadioButton name="mode" labelText="Server" value="server" />
-			</RadioButtonGroup>
-		</FormGroup>
-		<FormGroup legendText="DHT message">
-			<TextInput
-				required={mode === 'server'}
-				disabled={mode === 'client'}
-				name="message"
-				bind:value={dhtMessage}
-				placeholder="Enter a message to send in the DHT"
-			/>
-		</FormGroup>
-		<Button type="submit">Join</Button>
-	</Form>
+	<div style="width:50%; margin-right:40px;">
+		<Form
+			on:submit={(event) => {
+				event.preventDefault();
+				if (mode === 'client') {
+					joinAsClient(topic);
+				} else {
+					joinAsServer(topic, dhtMessage);
+				}
+			}}
+			method="post"
+		>
+			<FormGroup legendText="Swarm topic">
+				<TextInput
+					required
+					name="topic"
+					placeholder="Enter topic to swarm for"
+					bind:value={topic}
+				/>
+			</FormGroup>
+			<FormGroup legendText="Join swarm as ...">
+				<RadioButtonGroup bind:selected={mode}>
+					<RadioButton name="mode" labelText="Client" value="client" />
+					<RadioButton name="mode" labelText="Server" value="server" />
+				</RadioButtonGroup>
+			</FormGroup>
+			<FormGroup legendText="DHT message">
+				<TextInput
+					required={mode === 'server'}
+					disabled={mode === 'client'}
+					name="message"
+					bind:value={dhtMessage}
+					placeholder="Enter a message to send in the DHT"
+				/>
+			</FormGroup>
+			<Button type="submit">Join</Button>
+		</Form>
+		<div style="margin-top:40px;">
+			<h6>Your peer id</h6>
+			<Tag style="margin-top:10px;">{$ownPeerId}</Tag>
+		</div>
+		<div style="margin-top:40px;">
+			<h6>List of connected peer ids</h6>
+			{#each $connectedPeers as connectedPeer}
+				<Tag style="margin-top:10px;">{connectedPeer}</Tag>
+			{/each}
+		</div>
+	</div>
 	<StructuredList>
 		<StructuredListHead>
 			<StructuredListRow head>

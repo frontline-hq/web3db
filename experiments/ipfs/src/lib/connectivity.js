@@ -5,17 +5,20 @@ import { bootstrap } from '@libp2p/bootstrap';
 //import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
 //import { tcp } from '@libp2p/tcp';
 import { webSockets } from '@libp2p/websockets';
+import { webTransport } from '@libp2p/webtransport';
 import * as filters from '@libp2p/websockets/filters';
 import { webRTC, webRTCDirect } from '@libp2p/webrtc';
-import { circuitRelayTransport } from 'libp2p/circuit-relay';
+import { circuitRelayTransport, circuitRelayServer } from 'libp2p/circuit-relay';
 import { MemoryBlockstore } from 'blockstore-core';
 import { MemoryDatastore } from 'datastore-core';
 import { createHelia } from 'helia';
 import { createLibp2p } from 'libp2p';
 import { identifyService } from 'libp2p/identify';
+import { autoNATService } from 'libp2p/autonat';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { writable } from 'svelte/store';
 import { kadDHT } from '@libp2p/kad-dht';
+import { ipniContentRouting } from '@libp2p/ipni-content-routing';
 
 export const logs = writable([]);
 export const connectedPeers = writable([]);
@@ -60,6 +63,7 @@ export async function createNode() {
 				}
 			}),
 			webRTCDirect(),
+			webTransport(),
 			circuitRelayTransport({
 				discoverRelays: 1
 			})
@@ -75,10 +79,15 @@ export async function createNode() {
 				interval: 1000
 			}) */
 		],
+		contentRouters: [ipniContentRouting('https://cid.contact')],
 		services: {
 			identify: identifyService(),
+			autoNAT: autoNATService(),
 			pubsub: gossipsub({ allowPublishToZeroPeers: true, emitSelf: true }),
-			dht: kadDHT()
+			dht: kadDHT(),
+			relay: circuitRelayServer({
+				advertise: true
+			})
 		}
 	});
 

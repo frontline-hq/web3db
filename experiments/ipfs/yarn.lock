@@ -615,7 +615,7 @@
   resolved "https://registry.yarnpkg.com/@libp2p/interfaces/-/interfaces-3.3.2.tgz#5d8079be845b0960939b5b18880e785a4714465a"
   integrity sha512-p/M7plbrxLzuQchvNwww1Was7ZeGE2NaOFulMaZBYIihU8z3fhaV+a033OqnC/0NTX/yhfdNOG7znhYq3XoR/g==
 
-"@libp2p/ipni-content-routing@^1.0.0":
+"@libp2p/ipni-content-routing@^1.0.0", "@libp2p/ipni-content-routing@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@libp2p/ipni-content-routing/-/ipni-content-routing-1.0.1.tgz#fd85e32af96b808eea35d6f536b807e78594e71b"
   integrity sha512-zPNbkbRHDUPB3wyzm9bMFJBgE38bFJw90NAAwFM1paBuPOn7z+UjuGuZA1gQrgKLO+++Q0DCMeVmkO5Zo3Nzfg==
@@ -1040,7 +1040,7 @@
     wherearewe "^2.0.1"
     ws "^8.12.1"
 
-"@libp2p/webtransport@^2.0.1":
+"@libp2p/webtransport@^2.0.1", "@libp2p/webtransport@^2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@libp2p/webtransport/-/webtransport-2.0.2.tgz#20c020b813ab3122e852a77723652d216ebcdc8a"
   integrity sha512-Vok9j2WT6tF7dlDdbDV3EfenTsGLim1icrR6HqSzTRZAZn7uOBtMKKoO2YnXgGyHmnstqxLt0axnZWc2v5uKNQ==

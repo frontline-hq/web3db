@@ -32,7 +32,10 @@ export async function joinAsClient(topic) {
 	swarm.on('connection', (conn, info) => {
 		addToLogs({ type: 'Client progress report', message: 'Client established connection.' });
 		console.log(info);
-		conn.on('data', async (data) => {
+		const onerror = (err) => console.error(err);
+		conn.setTimeout(15000);
+		conn.on('error', onerror);
+		conn.once('data', async (data) => {
 			console.log(data);
 			addToLogs({
 				type: 'Client progress report',
@@ -45,9 +48,8 @@ export async function joinAsClient(topic) {
 				message: 'Added received drive core to corestore'
 			});
 			drive = new Hyperdrive(store, data);
-			const done = drive.findingPeers();
-			done();
 			addToLogs({ type: 'Client progress report', message: 'Continuing requests to drive.' });
+			conn.off('error', onerror);
 			// Replicate the drive with the added core.
 			drive.replicate(conn);
 			addToLogs({
@@ -55,6 +57,15 @@ export async function joinAsClient(topic) {
 				message: 'Fetching drive from remote peer'
 			});
 			await drive.update();
+			addToLogs({
+				type: 'Client progress report',
+				message: `Updated drive`
+			});
+			await drive.download('/');
+			addToLogs({
+				type: 'Client progress report',
+				message: `Downloaded drive root folder`
+			});
 			const exists = await drive.exists('/blob.txt');
 			addToLogs({
 				type: 'Client progress report',
@@ -79,6 +90,11 @@ export async function joinAsServer(topic) {
 		type: 'Server progress report',
 		message: 'Added example file "/blob.txt" containing string "example" to drive.'
 	});
+	const exists = await drive.exists('/blob.txt');
+	addToLogs({
+		type: 'Server progress report',
+		message: `Path "/blob.txt" does ${exists ? '' : 'NOT'} exist in drive.`
+	});
 	swarm.on('connection', (conn, info) => {
 		console.log(info);
 		addToLogs({ type: 'Server progress report', message: 'Server established connection.' });
@@ -92,7 +108,6 @@ export async function joinAsServer(topic) {
 			type: 'Server progress report',
 			message: 'Sharing drive with remote peer'
 		});
-		conn.end();
 	});
 	const topicBuffer = Buffer.alloc(32).fill(topic);
 	addToLogs({ type: 'Server progress report', message: `Joining topic "${topic}"...` });

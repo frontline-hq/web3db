@@ -1,5 +1,5 @@
 <script>
-	import { joinAsClient, joinAsServer, logs } from '../lib/connectivity';
+	import { joinAsClient, joinAsServer, logs } from '../lib/connectivity-v2';
 	import {
 		Form,
 		FormGroup,
@@ -15,42 +15,39 @@
 	} from 'carbon-components-svelte';
 	let mode = 'client';
 	let topic = '';
-	let dhtMessage = '';
+	let connectionResult;
 </script>
 
 <div style="display: flex; padding: 40px;">
-	<Form
-		on:submit={(event) => {
-			event.preventDefault();
-			if (mode === 'client') {
-				joinAsClient(topic);
-			} else {
-				joinAsServer(topic, dhtMessage);
-			}
-		}}
-		method="post"
-		style="width:50%; margin-right:40px;"
-	>
-		<FormGroup legendText="Swarm topic">
-			<TextInput required name="topic" placeholder="Enter topic to swarm for" bind:value={topic} />
-		</FormGroup>
-		<FormGroup legendText="Join swarm as ...">
-			<RadioButtonGroup bind:selected={mode}>
-				<RadioButton name="mode" labelText="Client" value="client" />
-				<RadioButton name="mode" labelText="Server" value="server" />
-			</RadioButtonGroup>
-		</FormGroup>
-		<FormGroup legendText="DHT message">
-			<TextInput
-				required={mode === 'server'}
-				disabled={mode === 'client'}
-				name="message"
-				bind:value={dhtMessage}
-				placeholder="Enter a message to send in the DHT"
-			/>
-		</FormGroup>
-		<Button type="submit">Join</Button>
-	</Form>
+	<div style="width:50%; margin-right:40px;">
+		<Form
+			on:submit={(event) => {
+				event.preventDefault();
+				if (mode === 'client') {
+					connectionResult = joinAsClient(topic);
+				} else {
+					connectionResult = joinAsServer(topic);
+				}
+			}}
+			method="post"
+		>
+			<FormGroup legendText="Swarm topic">
+				<TextInput
+					required
+					name="topic"
+					placeholder="Enter recipients address here (pub key or email)"
+					bind:value={topic}
+				/>
+			</FormGroup>
+			<FormGroup legendText="Join swarm as ...">
+				<RadioButtonGroup bind:selected={mode}>
+					<RadioButton name="mode" labelText="Client" value="client" />
+					<RadioButton name="mode" labelText="Server" value="server" />
+				</RadioButtonGroup>
+			</FormGroup>
+			<Button type="submit">{mode === 'client' ? 'Fetch drive' : 'Create & share drive'}</Button>
+		</Form>
+	</div>
 	<StructuredList>
 		<StructuredListHead>
 			<StructuredListRow head>

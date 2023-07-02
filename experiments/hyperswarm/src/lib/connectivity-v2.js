@@ -42,11 +42,12 @@ export async function joinAsClient(topic) {
 				message: `Received drive cores pub key: ${b4a.toString(data)}`
 			});
 			// Add core to corestore
-			const core = store.get({ key: data });
+			/* const core = store.get({ key: data });
 			addToLogs({
 				type: 'Client progress report',
 				message: 'Added received drive core to corestore'
-			});
+			}); */
+			console.log(data);
 			drive = new Hyperdrive(store, data);
 			addToLogs({ type: 'Client progress report', message: 'Continuing requests to drive.' });
 			conn.off('error', onerror);

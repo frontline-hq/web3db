@@ -27,6 +27,7 @@
 		"b4a": "^1.6.4",
 		"buffer": "^6.0.3",
 		"corestore": "^6.8.4",
+		"hyperbee": "^2.13.5",
 		"hyperdrive": "^11.2.0",
 		"hyperswarm": "^4.5.1",
 		"random-access-memory": "^6.2.0"

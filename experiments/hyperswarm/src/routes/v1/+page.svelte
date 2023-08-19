@@ -1,5 +1,5 @@
 <script>
-	import { joinAsClient, joinAsServer, logs } from '../../lib/connectivity-v1';
+	import { joinAsClient, joinAsServer, logs, addToLogs } from '../../lib/connectivity-v1';
 	import {
 		Form,
 		FormGroup,

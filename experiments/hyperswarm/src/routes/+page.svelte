@@ -1,5 +1,6 @@
 <script>
-	import { joinAsClient, joinAsServer, logs } from '../lib/connectivity-v2';
+	import { getDrive, sendDrive } from '../lib/connectivity-v2';
+	import { logs } from '../lib/connectivity-v1';
 	import {
 		Form,
 		FormGroup,
@@ -24,9 +25,9 @@
 			on:submit={(event) => {
 				event.preventDefault();
 				if (mode === 'client') {
-					connectionResult = joinAsClient(topic);
+					connectionResult = getDrive(topic);
 				} else {
-					connectionResult = joinAsServer(topic);
+					connectionResult = sendDrive(topic);
 				}
 			}}
 			method="post"
